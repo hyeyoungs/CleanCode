@@ -1,3 +1,6 @@
+# 03 함수
+> 함수를 안전하고 간결하게 설계하는 법
+
 ## Introduction
 - 프로그램의 가장 기본적인 단위는 함수다.
 - 함수가 읽기 쉽고 이해하기 쉬운 이유는 무엇일까? 
@@ -43,7 +46,7 @@ public static String renderPageWithSetupsAndTeardowns( PageData pageData, boolea
 - 함수가 ‘한가지’ 작업만 하려면 함수 내 모든 문장의 추상화 수준이 동일해야 된다.  
 - 한 함수 내에 추상화 수준이 섞이게 된다면 읽는 사람이 헷갈린다.
 
-#### 위에서 아래로 코드 읽기:내려가기 규칙
+#### 위에서 아래로 코드 읽기 : 내려가기 규칙
 - 코드는 위에서 아래로 이야기처럼 읽혀야 좋다.  
 - 함수 추상화 부분이 한번에 한단계씩 낮아지는 것이 가장 이상적이다. (내려가기 규칙)
 - 클린 코드 예시 : 각 함수는 다음 함수를 소개하고, 각 함수는 일정한 추상화 수준을 유지한다.
@@ -141,8 +144,8 @@ public class EmployeeFactoryImpl implements EmployeeFactory {
   - `assertExpectedEqualsActual(expected, actual);`  
 
 ## 부수 효과를 일으키지 마라!
-- 부수효과는 거짓말이다. 함수에서 한가지를 하겠다고 약속하고는 남몰래 다른 짓을 하는 것이므로, 한 함수에서는 딱 한가지만 수행할 것!
-- 아래 코드에서 `Session.initialize();`는 함수명과는 맞지 않는 부수효과이다.
+- 부수 효과는 거짓말이다. <br>함수에서 한가지를 하겠다고 약속하고는 남몰래 다른 짓을 하는 것이므로, 한 함수에서는 딱 한가지만 수행할 것!
+- 아래 코드에서 `Session.initialize();`는 함수명과는 맞지 않는 부수 효과이다.
 ```java
 public class UserValidator {
 	private Cryptographer cryptographer;
@@ -162,5 +165,94 @@ public class UserValidator {
 ```
 
 #### 출력인수
-- 일반적으로 출력 인수는 피해야 한다.   
-- 함수에서 상태를 변경해야 한다면 함수가 속한 객체 상태를 변경하는 방식을 택하라.
+일반적으로 출력 인수는 피해야 한다.  
+함수에서 상태를 변경해야 한다면 함수가 속한 객체 상태를 변경하는 방식을 택하라.
+
+## 명령과 조회를 분리하라
+함수는 뭔가 객체 상태를 변경하거나, 객체 정보를 반환하거나 둘 중 하나다. 둘 다 수행해서는 안 된다.  
+`public boolean set(String attribute, String value);`같은 경우에는 
+<br>속성 값 설정 성공 시 true를 반환하므로 괴상한 코드가 작성된다.  
+`if(set(“username”, “unclebob”))...` 
+<br>그러므로 명령과 조회를 분리해 혼란을 주지 않도록 한다.
+
+## 오류코드보다 예외를 사용하라!
+
+try/catch를 사용하면 오류 처리 코드가 원래 코드에서 분리되므로 코드가 깔끔해 진다.
+
+#### Try/Catch 블록 뽑아내기
+
+```java
+if (deletePage(page) == E_OK) {
+	if (registry.deleteReference(page.name) == E_OK) {
+		if (configKeys.deleteKey(page.name.makeKey()) == E_OK) {
+			logger.log("page deleted");
+		} else {
+			logger.log("configKey not deleted");
+		}
+	} else {
+		logger.log("deleteReference from registry failed"); 
+	} 
+} else {
+	logger.log("delete failed"); return E_ERROR;
+}
+```
+
+정상 작동과 오류 처리 동작을 뒤섞는 추한 구조이므로 if/else와 마찬가지로 블록을 별도 함수로 뽑아내는 편이 좋다.
+
+```java
+public void delete(Page page) {
+	try {
+		deletePageAndAllReferences(page);
+  	} catch (Exception e) {
+  		logError(e);
+  	}
+}
+
+private void deletePageAndAllReferences(Page page) throws Exception { 
+	deletePage(page);
+	registry.deleteReference(page.name); 
+	configKeys.deleteKey(page.name.makeKey());
+}
+
+private void logError(Exception e) { 
+	logger.log(e.getMessage());
+}
+```
+
+오류 처리도 한가지 작업이다.
+
+#### Error.java 의존성 자석
+
+```java
+public enum Error { 
+	OK,
+	INVALID,
+	NO_SUCH,
+	LOCKED,
+	OUT_OF_RESOURCES, 	
+	WAITING_FOR_EVENT;
+}
+```
+
+오류를 처리하는 곳곳에서 오류코드를 사용한다면 enum class를 쓰게 되는데 이런 클래스는 의존성 자석이므로,
+<br>새 오류코드를 추가하거나 변경할 때 cost가 많이 필요하다.
+그러므로 예외를 사용하는 것이 더 안전하다.
+
+## 반복하지 마라!
+중복은 모든 소프트웨어에서 모든 악의 근원이므로 늘 중복을 없애도록 노력해야한다.
+
+## 구조적 프로그래밍
+다익스트라의 구조적 프로그래밍의 원칙을 따르자면 모든 함수와 함수 내 모든 블록에 입구와 출구가 하나여야 된다. 
+<br>즉, 함수는 return문이 하나여야 되며, 
+<br>**루프 안에서 break나 continue를 사용해선 안되며 goto는 절대로, 절대로 사용하지 말자.**
+
+그런데 구조적 프로그래밍의 목표와 규율은 공감하지만 함수가 작다면 위 규칙은 별 이익을 제공하지 못한다. 
+<br>함수가 아주 클 때만 상당한 이익을 제공한다. 
+<br>그러므로 함수를 작게 만든다면 간혹 return, break, continue를 사용해도 괜찮다. 
+<br>오히려 때로는 단일 입/출구 규칙보다 의도를 표현하기 쉬워진다.
+
+## 함수를 어떻게 짜죠?
+처음에는 길고 복잡하고, 들여쓰기 단계나 중복된 루프도 많다. 
+<br>인수목록도 길지만, 이 코드들을 빠짐없이 테스트하는 단위 테스트 케이스도 만들고,
+<br>코드를 다듬고, 함수를 만들고, 이름을 바꾸고, 중복을 제거한다. 
+<br>처음부터 탁 짜지지는 않는다.
