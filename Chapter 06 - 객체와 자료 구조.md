@@ -334,5 +334,5 @@ public class Car implements Vehicle {
 - 책에 나오는 디미터의 법칙과, 기차 충돌에 대한 내용을 읽으면서 ‘나도 저런 코드 작성한적이 있었던거 같은데?’라는 생각도 많이 했다.
 - private 필드와 public getter, setter를 습관적으로 만들면서, 기차충돌 형태의 코드가 발생하게끔 만들었던거 같았다.
 
-## Issue
+## Question
 - DTO를 사용하는 이유
