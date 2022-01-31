@@ -110,4 +110,3 @@ public class Sensors {
 
 ## Question
 - Adapter Pattern이란?
-- Adapter Pattern으로 API 사용을 캡슐화해 API가 바뀔 때 수정한 코드를 한 곳으로 모은다는 말을 예시를 만들어보며 이해해보자.
