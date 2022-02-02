@@ -273,10 +273,7 @@ public void setFitnessePort(int fitnessePort) {
 #### 좋은 주석
   - 구현에 대한 정보를 제공한다. (ex. 정규식)
   - 의도와 중요성을 설명한다.
-  - TODO, FIXME 
-#### 주석보다 annotation
-  - @Deprecated 
-  - @NotThreadSafe
+  - TODO, FIXME
 
 ## Feelings
 - 물론 주석이 없어야 명확하고 잘짠 코드라고 할수 있겠지만,
